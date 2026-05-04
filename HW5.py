@@ -35,17 +35,18 @@ def dN_dxi(xi, eta):
                      [-(1+eta)/4, (1-xi)/4]])
 
 Ke = np.zeros((4,4))
+F = np.zeros((4,1))
 for qp in np.arange(xe.shape[0]):
     xi = xe[qp, 0]
     eta = xe[qp, 1]
-    J = np.dot(X.T, dN_dxi(xi, eta))
+    J = np.dot(X[conn[0]].T, dN_dxi(xi, eta))
     detJ = np.linalg.det(J)
     gradN = np.dot(dN_dxi(xi, eta), np.linalg.inv(J))
     Ke = Ke + k * Dz * np.dot(gradN, gradN.T) * detJ * W[qp]
 
 K = np.zeros((4,4))
 K[np.ix_(dofs[conn[0]], dofs[conn[0]])] = Ke
-print(f"element 1: K = \n{K}\n")
+print(f"element 1: Ke = \n{Ke}\n")
 
 
 
@@ -70,18 +71,18 @@ F_dd = F[dofs[[2,3]]]
 K_fd = K[np.ix_(dofs[[0,1]], dofs[[2,3]])]
 
 U = np.linalg.solve(K_ff, F_ff - K_fd@np.array([[Tw],[Tw]]))
-print(f"U = \n{U}")
+print(f"U [1,2]= \n{U}")
 
 T = np.array([[U[0,0]],[U[1,0]],[Tw],[Tw]])
 
 print("\n==================\n==================")
 
-gradT1 = gradN1.T@T[conn[0]]
-gradT2 = gradN2.T@T[conn[1]]
-print(f"gradT1 = \n{gradT1}\n")
-print(f"gradT2 = \n{gradT2}\n")
-
-flux1 = -k*gradT1
-flux2 = -k*gradT2
-print(f"flux1 = \n{flux1}\n")
-print(f"flux2 = \n{flux2}\n")
+for qp in np.arange(xe.shape[0]):
+    xi = xe[qp, 0]
+    eta = xe[qp, 1]
+    J = np.dot(X[conn[0]].T, dN_dxi(xi, eta))
+    detJ = np.linalg.det(J)
+    gradN = np.dot(dN_dxi(xi, eta), np.linalg.inv(J))
+    gradT = gradN.T@T[conn[0]]
+    q = -k*gradT
+    print(f"qp = {qp}, xi = {xi}, eta = {eta}, \ngradT = \n{gradT},\n q = \n{q}\n")
